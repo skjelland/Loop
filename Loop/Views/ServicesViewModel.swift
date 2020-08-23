@@ -9,16 +9,13 @@
 import LoopKit
 import SwiftUI
 
-public protocol ServicesViewModelDelegate: class {
-    func addService(identifier: String)
-    func gotoService(identifier: String)
-}
-
 public class ServicesViewModel: ObservableObject {
     
     @Published var showServices: Bool
     @Published var availableServices: [AvailableService]
     @Published var activeServices: [Service]
+    let addService: ((_ identifier: String) -> Void)?
+    let gotoService: ((_ identifier: String) -> Void)?
     
     var inactiveServices: [AvailableService] {
         return availableServices.filter { availableService in
@@ -26,23 +23,23 @@ public class ServicesViewModel: ObservableObject {
         }
     }
     
-    weak var delegate: ServicesViewModelDelegate?
-    
     init(showServices: Bool,
          availableServices: [AvailableService],
          activeServices: [Service],
-         delegate: ServicesViewModelDelegate? = nil) {
+         addService: ((_ identifier: String) -> Void)? = nil,
+         gotoService: ((_ identifier: String) -> Void)? = nil) {
         self.showServices = showServices
         self.activeServices = activeServices
         self.availableServices = availableServices
-        self.delegate = delegate
+        self.addService = addService
+        self.gotoService = gotoService
     }
     
     func didTapService(_ index: Int) {
-        delegate?.gotoService(identifier: activeServices[index].serviceIdentifier)
+        gotoService?(activeServices[index].serviceIdentifier)
     }
     
     func didTapAddService(_ availableService: AvailableService) {
-        delegate?.addService(identifier: availableService.identifier)
+        addService?(availableService.identifier)
     }
 }

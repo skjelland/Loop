@@ -1245,7 +1245,8 @@ final class StatusTableViewController: LoopChartsTableViewController {
         let servicesViewModel = ServicesViewModel(showServices: FeatureFlags.includeServicesInSettingsEnabled,
                                                   availableServices: deviceManager.servicesManager.availableServices,
                                                   activeServices: deviceManager.servicesManager.activeServices,
-                                                  delegate: self)
+                                                  addService: { [weak self] in self?.addService(identifier: $0) },
+                                                  gotoService: { [weak self] in self?.gotoService(identifier: $0) })
         let viewModel = SettingsViewModel(appNameAndVersion: Bundle.main.localizedNameAndVersion,
                                           notificationsCriticalAlertPermissionsViewModel: notificationsCriticalAlertPermissionsViewModel,
                                           pumpManagerSettingsViewModel: pumpViewModel,
@@ -1796,7 +1797,7 @@ extension StatusTableViewController: ServiceSettingsDelegate {
     }
 }
 
-extension StatusTableViewController: ServicesViewModelDelegate {
+extension StatusTableViewController {
     func addService(identifier: String) {
         setupService(withIdentifier: identifier)
     }

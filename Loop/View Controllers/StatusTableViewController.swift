@@ -1234,7 +1234,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
                 self?.setupCGMManager($0.identifier)
             },
             settingsViewControllerFactory: { [weak self] in
-                let unit = self!.deviceManager.loopManager.glucoseStore.preferredUnit!
+                let unit = self!.preferredUnit!
                 let cgmManager = self!.deviceManager.cgmManager as! CGMManagerUI
                 return cgmManager.settingsViewController(for: unit, glucoseTintColor: .glucoseTintColor, guidanceColors: .default)
         })

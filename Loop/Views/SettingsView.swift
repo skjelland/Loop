@@ -140,7 +140,7 @@ extension SettingsView {
     private var pumpChoices: [ActionSheet.Button] {
         var result = viewModel.pumpManagerSettingsViewModel.availableDevices.map { availableDevice in
             ActionSheet.Button.default(Text(availableDevice.localizedTitle)) {
-                // TODO: this "dismiss then call didTapAddDevice()" here is temporary, until we've completely gotten rid of SettingsTableViewController
+                // TODO: this "dismiss then call didTapAddDevice()" here is temporary, until we can navigate properly
                 self.dismiss()
                 self.viewModel.pumpManagerSettingsViewModel.didTapAddDevice(availableDevice)
             }
@@ -176,7 +176,7 @@ extension SettingsView {
     private var cgmChoices: [ActionSheet.Button] {
         var result = viewModel.cgmManagerSettingsViewModel.availableDevices.map { availableDevice in
             ActionSheet.Button.default(Text(availableDevice.localizedTitle)) {
-                // TODO: this "dismiss then call didTapAddDevice()" here is temporary, until we've completely gotten rid of SettingsTableViewController
+                // TODO: this "dismiss then call didTapAddDevice()" here is temporary, until we can navigate properly
                 self.dismiss()
                 self.viewModel.cgmManagerSettingsViewModel.didTapAddDevice(availableDevice)
             }
@@ -188,11 +188,7 @@ extension SettingsView {
     private var servicesSection: some View {
         Section(header: SectionHeader(label: NSLocalizedString("Services", comment: "The title of the services section in settings"))) {
             ForEach(viewModel.servicesViewModel.activeServices.indices, id: \.self) { index in
-                // TODO: this "dismiss then call didTapService()" here is temporary, until we've completely gotten rid of SettingsTableViewController
-                Button(action: { self.dismiss(); self.viewModel.servicesViewModel.didTapService(index) }, label: {
-                    Text(self.viewModel.servicesViewModel.activeServices[index].localizedTitle)
-                })
-                    .accentColor(.primary)
+                self.serviceButton(index)
             }
             Button(action: { self.showServiceChooser = true }, label: {
                 Text("Add Service", comment: "The title of the services section in settings")
@@ -203,10 +199,24 @@ extension SettingsView {
         }
     }
     
+    private func serviceButton(_ index: Int) -> some View {
+        ZStack(alignment: .leading) {
+            LargeButton(action: { },
+                        imageView: serviceImage(uiImage: (viewModel.servicesViewModel.activeServices[index] as! ServiceUI).image),
+                        label: viewModel.servicesViewModel.activeServices[index].localizedTitle,
+                    descriptiveText: "Cloud Service")
+            NavigationLink(destination: ServiceSettingsView(settingsViewControllerFactory: {
+                return self.viewModel.servicesViewModel.servicesSettingsViewControllerFactory!(index)
+            })) {
+                EmptyView()
+            }
+        }
+    }
+    
     private var serviceChoices: [ActionSheet.Button] {
         var result = viewModel.servicesViewModel.inactiveServices.map { availableService in
             ActionSheet.Button.default(Text(availableService.localizedTitle)) {
-                // TODO: this "dismiss then call didTapAddService()" here is temporary, until we've completely gotten rid of SettingsTableViewController
+                // TODO: this "dismiss then call didTapAddService()" here is temporary, until we can navigate properly
                 self.dismiss()
                 self.viewModel.servicesViewModel.didTapAddService(availableService)
             }
@@ -264,6 +274,10 @@ extension SettingsView {
         } else {
             return AnyView(Spacer())
         }
+    }
+    
+    private func serviceImage(uiImage: UIImage?) -> AnyView {
+        return deviceImage(uiImage: uiImage)
     }
 }
 
@@ -332,6 +346,8 @@ struct DeviceSettingsView: View {
             .navigationBarTitle(settingsViewControllerFactory().title ?? "")
     }
 }
+typealias ServiceSettingsViewControllerAdapter = DeviceSettingsViewControllerAdapter
+typealias ServiceSettingsView = DeviceSettingsView
 
 // MARK: Previews
 

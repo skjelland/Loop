@@ -1243,11 +1243,15 @@ final class StatusTableViewController: LoopChartsTableViewController {
                                     bolusVolumes: $0.supportedBolusVolumes,
                                     maximumBasalScheduleEntryCount: $0.maximumBasalScheduleEntryCount)
         }
-        let servicesViewModel = ServicesViewModel(showServices: FeatureFlags.includeServicesInSettingsEnabled,
-                                                  availableServices: deviceManager.servicesManager.availableServices,
-                                                  activeServices: deviceManager.servicesManager.activeServices,
-                                                  addService: { [weak self] in self?.addService(identifier: $0) },
-                                                  gotoService: { [weak self] in self?.gotoService(identifier: $0) })
+        let servicesViewModel = ServicesViewModel(
+            showServices: FeatureFlags.includeServicesInSettingsEnabled,
+            availableServices: deviceManager.servicesManager.availableServices,
+            activeServices: deviceManager.servicesManager.activeServices,
+            addService: { [weak self] in self?.addService(identifier: $0) },
+            gotoService: { [weak self] in self?.gotoService(identifier: $0) },
+            serviceSettingsViewControllerFactory: { [weak self] index in
+                return ((self?.deviceManager.servicesManager.activeServices[index] as? ServiceUI)?.settingsViewController(chartColors: .primary, carbTintColor: .carbTintColor, glucoseTintColor: .glucoseTintColor, guidanceColors: .default, insulinTintColor: .insulinTintColor))!
+        })
         let viewModel = SettingsViewModel(appNameAndVersion: Bundle.main.localizedNameAndVersion,
                                           notificationsCriticalAlertPermissionsViewModel: notificationsCriticalAlertPermissionsViewModel,
                                           pumpManagerSettingsViewModel: pumpViewModel,

@@ -116,11 +116,16 @@ extension SettingsView {
     @ViewBuilder
     private var pumpSection: some View {
         if viewModel.pumpManagerSettingsViewModel.isSetUp() {
-            // TODO: this "dismiss then call onTapped()" here is temporary, until we've completely gotten rid of SettingsTableViewController
-            LargeButton(action: { self.dismiss(); self.viewModel.pumpManagerSettingsViewModel.onTapped() },
-                        imageView: deviceImage(uiImage: viewModel.pumpManagerSettingsViewModel.image()),
-                        label: viewModel.pumpManagerSettingsViewModel.name(),
-                        descriptiveText: NSLocalizedString("Insulin Pump", comment: "Descriptive text for Insulin Pump"))
+            ZStack(alignment: .leading) {
+                LargeButton(action: { },
+                            imageView: deviceImage(uiImage: viewModel.pumpManagerSettingsViewModel.image()),
+                            label: viewModel.pumpManagerSettingsViewModel.name(),
+                            descriptiveText: NSLocalizedString("Insulin Pump", comment: "Descriptive text for Insulin Pump"))
+                NavigationLink(destination: DeviceSettingsView(settingsViewControllerFactory:
+                    viewModel.pumpManagerSettingsViewModel.settingsViewControllerFactory!)) {
+                    EmptyView()
+                }
+            }
         } else {
             LargeButton(action: { self.showPumpChooser = true },
                         imageView: AnyView(plusImage),
@@ -147,11 +152,16 @@ extension SettingsView {
     @ViewBuilder
     private var cgmSection: some View {
         if viewModel.cgmManagerSettingsViewModel.isSetUp() {
-            // TODO: this "dismiss then call onTapped()" here is temporary, until we've completely gotten rid of SettingsTableViewController
-            LargeButton(action: { self.dismiss(); self.viewModel.cgmManagerSettingsViewModel.onTapped() },
-                        imageView: deviceImage(uiImage: viewModel.cgmManagerSettingsViewModel.image()),
-                        label: viewModel.cgmManagerSettingsViewModel.name(),
+            ZStack(alignment: .leading) {
+                LargeButton(action: { },
+                            imageView: deviceImage(uiImage: viewModel.cgmManagerSettingsViewModel.image()),
+                            label: viewModel.cgmManagerSettingsViewModel.name(),
                         descriptiveText: NSLocalizedString("Continuous Glucose Monitor", comment: "Descriptive text for Continuous Glucose Monitor"))
+                NavigationLink(destination: DeviceSettingsView(settingsViewControllerFactory:
+                    viewModel.cgmManagerSettingsViewModel.settingsViewControllerFactory!)) {
+                    EmptyView()
+                }
+            }
         } else {
             LargeButton(action: { self.showCGMChooser = true },
                         imageView: AnyView(plusImage),
@@ -292,6 +302,38 @@ fileprivate struct LargeButton: View {
         }
     }
 }
+
+// MARK: Adapting to the Device Settings ViewControllers
+
+struct DeviceSettingsViewControllerAdapter: UIViewControllerRepresentable {
+    let settingsViewControllerFactory: () -> UIViewController
+    
+    func makeUIViewController(context: Context) -> UIViewController {
+        // Somewhat ugly hack to strip overlying NavigationController off of plugins' Settings UIViewController
+        // because that's how the "old" settings UI worked
+        let settingsViewController = settingsViewControllerFactory()
+        if let navigationViewController = settingsViewController as? UINavigationController,
+            let result = navigationViewController.viewControllers.first {
+            return result
+        } else {
+            return settingsViewController
+        }
+    }
+
+    func updateUIViewController(_ viewController: UIViewController, context: Context) {
+    }
+}
+
+struct DeviceSettingsView: View {
+    let settingsViewControllerFactory: () -> UIViewController
+
+    var body: some View {
+        DeviceSettingsViewControllerAdapter(settingsViewControllerFactory: settingsViewControllerFactory)
+            .navigationBarTitle(settingsViewControllerFactory().title ?? "")
+    }
+}
+
+// MARK: Previews
 
 fileprivate class FakeService1: Service {
     static var localizedTitle: String = "Service 1"

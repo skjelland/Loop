@@ -17,11 +17,11 @@ public class DeviceViewModel: ObservableObject {
     let image: () -> UIImage?
     let name: () -> String
     let deleteData: (() -> Void)?
-    let onTapped: () -> Void
     let didTapAddDevice: (AvailableDevice) -> Void
     var isTestingDevice: Bool {
         return deleteData != nil
     }
+    let settingsViewControllerFactory: (() -> UIViewController & CompletionNotifying)?
 
     @Published var availableDevices: [AvailableDevice]
 
@@ -30,16 +30,16 @@ public class DeviceViewModel: ObservableObject {
                 isSetUp: @escaping () -> Bool = { false },
                 availableDevices: [AvailableDevice] = [],
                 deleteData: (() -> Void)? = nil,
-                onTapped: @escaping () -> Void = { },
-                didTapAddDevice: @escaping (AvailableDevice) -> Void = { _ in  }
+                didTapAddDevice: @escaping (AvailableDevice) -> Void = { _ in  },
+                settingsViewControllerFactory: (() -> UIViewController & CompletionNotifying)? = nil
                 ) {
         self.image = image
         self.name = name
         self.availableDevices = availableDevices
         self.isSetUp = isSetUp
         self.deleteData = deleteData
-        self.onTapped = onTapped
         self.didTapAddDevice = didTapAddDevice
+        self.settingsViewControllerFactory = settingsViewControllerFactory
     }
 }
 

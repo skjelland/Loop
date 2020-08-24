@@ -1214,15 +1214,14 @@ final class StatusTableViewController: LoopChartsTableViewController {
             deleteData: (deviceManager.pumpManager is TestingPumpManager) ? {
                 [weak self] in self?.deviceManager.deleteTestingPumpData()
                 } : nil,
-            onTapped: { [weak self] in
-                self?.onPumpTapped()
-            },
             didTapAddDevice: { [weak self] in
                 if let pumpManagerType = self?.deviceManager.pumpManagerTypeByIdentifier($0.identifier) {
                     self?.setupPumpManager(for: pumpManagerType)
                 }
+            },
+            settingsViewControllerFactory: { [weak self] in
+                return self!.deviceManager.pumpManager!.settingsViewController(insulinTintColor: .insulinTintColor, guidanceColors: .default)
         })
-        
         let cgmViewModel = DeviceViewModel(
             image: {[weak self] in (self?.deviceManager.cgmManager as? DeviceManagerUI)?.smallImage },
             name: {[weak self] in self?.deviceManager.cgmManager?.localizedTitle ?? "" },
@@ -1231,11 +1230,13 @@ final class StatusTableViewController: LoopChartsTableViewController {
             deleteData: (deviceManager.cgmManager is TestingCGMManager) ? {
                 [weak self] in self?.deviceManager.deleteTestingCGMData()
                 } : nil,
-            onTapped: { [weak self] in
-                self?.onCGMTapped()
-            },
             didTapAddDevice: { [weak self] in
                 self?.setupCGMManager($0.identifier)
+            },
+            settingsViewControllerFactory: { [weak self] in
+                let unit = self!.deviceManager.loopManager.glucoseStore.preferredUnit!
+                let cgmManager = self!.deviceManager.cgmManager as! CGMManagerUI
+                return cgmManager.settingsViewController(for: unit, glucoseTintColor: .glucoseTintColor, guidanceColors: .default)
         })
         let pumpSupportedIncrements = deviceManager.pumpManager.map {
             PumpSupportedIncrements(basalRates: $0.supportedBasalRates,
@@ -1265,27 +1266,6 @@ final class StatusTableViewController: LoopChartsTableViewController {
         present(hostingController, animated: true)
     }
     
-    private func onPumpTapped() {
-        guard var settings = deviceManager.pumpManager?.settingsViewController(insulinTintColor: .insulinTintColor, guidanceColors: .default) else {
-            // assert?
-            return
-        }
-        settings.completionDelegate = self
-        present(settings, animated: true)
-    }
-
-    private func onCGMTapped() {
-        guard let unit = preferredUnit,
-            let cgmManager = deviceManager.cgmManager as? CGMManagerUI else {
-            // assert?
-            return
-        }
-        
-        var settings = cgmManager.settingsViewController(for: unit, glucoseTintColor: .glucoseTintColor, guidanceColors: .default)
-        settings.completionDelegate = self
-        present(settings, animated: true)
-    }
-
     // MARK: - HUDs
     
     @IBOutlet var hudView: StatusBarHUDView? {

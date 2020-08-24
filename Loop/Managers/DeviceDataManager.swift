@@ -561,7 +561,7 @@ extension DeviceDataManager: AlertPresenter {
 // MARK: - CGMManagerDelegate
 extension DeviceDataManager: CGMManagerDelegate {
     func cgmManagerWantsDeletion(_ manager: CGMManager) {
-//        dispatchPrecondition(condition: .onQueue(queue))
+        dispatchPrecondition(condition: .onQueue(queue))
         DispatchQueue.main.async {
             self.cgmManager = nil
         }

@@ -1781,7 +1781,7 @@ extension StatusTableViewController: ServiceSettingsDelegate {
     }
 }
 
-extension StatusTableViewController: ServicesViewModelDelegate {
+extension StatusTableViewController {
     func addService(identifier: String) {
         setupService(withIdentifier: identifier)
     }

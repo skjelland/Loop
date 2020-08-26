@@ -22,7 +22,7 @@ public class DeviceViewModel: ObservableObject {
         return deleteData != nil
     }
     let settingsViewControllerFactory: (() -> UIViewController & CompletionNotifying)?
-
+    
     @Published var availableDevices: [AvailableDevice]
 
     public init(image: @escaping () -> UIImage? = { nil },

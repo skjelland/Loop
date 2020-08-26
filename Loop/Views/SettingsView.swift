@@ -21,6 +21,8 @@ public struct SettingsView: View, HorizontalSizeClassOverride {
     @State var showCGMChooser: Bool = false
     @State var showServiceChooser: Bool = false
 
+    @State var selection: Int? = nil
+    
     public init(viewModel: SettingsViewModel) {
         self.viewModel = viewModel
     }
@@ -121,8 +123,11 @@ extension SettingsView {
                             imageView: deviceImage(uiImage: viewModel.pumpManagerSettingsViewModel.image()),
                             label: viewModel.pumpManagerSettingsViewModel.name(),
                             descriptiveText: NSLocalizedString("Insulin Pump", comment: "Descriptive text for Insulin Pump"))
-                NavigationLink(destination: DeviceSettingsView(settingsViewControllerFactory:
-                    viewModel.pumpManagerSettingsViewModel.settingsViewControllerFactory!)) {
+                NavigationLink(destination:
+                    DeviceSettingsView(settingsViewControllerFactory: viewModel.pumpManagerSettingsViewModel.settingsViewControllerFactory!) {
+                        self.selection = nil
+                    }, tag: 1, selection: $selection
+                ) {
                     EmptyView()
                 }
             }
@@ -157,8 +162,11 @@ extension SettingsView {
                             imageView: deviceImage(uiImage: viewModel.cgmManagerSettingsViewModel.image()),
                             label: viewModel.cgmManagerSettingsViewModel.name(),
                         descriptiveText: NSLocalizedString("Continuous Glucose Monitor", comment: "Descriptive text for Continuous Glucose Monitor"))
-                NavigationLink(destination: DeviceSettingsView(settingsViewControllerFactory:
-                    viewModel.cgmManagerSettingsViewModel.settingsViewControllerFactory!)) {
+                NavigationLink(destination:
+                    DeviceSettingsView(settingsViewControllerFactory: viewModel.cgmManagerSettingsViewModel.settingsViewControllerFactory!) {
+                        self.selection = nil
+                    }, tag: 2, selection: $selection
+                ) {
                     EmptyView()
                 }
             }
@@ -204,10 +212,13 @@ extension SettingsView {
             LargeButton(action: { },
                         imageView: serviceImage(uiImage: (viewModel.servicesViewModel.activeServices[index] as! ServiceUI).image),
                         label: viewModel.servicesViewModel.activeServices[index].localizedTitle,
-                    descriptiveText: "Cloud Service")
-            NavigationLink(destination: ServiceSettingsView(settingsViewControllerFactory: {
-                return self.viewModel.servicesViewModel.servicesSettingsViewControllerFactory!(index)
-            })) {
+                        descriptiveText: "Cloud Service")
+            NavigationLink(destination:
+                ServiceSettingsView(settingsViewControllerFactory: {
+                    return self.viewModel.servicesViewModel.servicesSettingsViewControllerFactory!(index)
+                }) {
+                    self.selection = nil
+                }, tag: 3, selection: $selection) {
                 EmptyView()
             }
         }
@@ -319,15 +330,29 @@ fileprivate struct LargeButton: View {
 
 // MARK: Adapting to the Device Settings ViewControllers
 
+class CompletionShim: CompletionDelegate {
+    let completion: () -> Void
+    init(_ completion: @escaping () -> Void) {
+        self.completion = completion
+    }
+    func completionNotifyingDidComplete(_ object: CompletionNotifying) {
+        completion()
+    }
+}
+
 struct DeviceSettingsViewControllerAdapter: UIViewControllerRepresentable {
-    let settingsViewControllerFactory: () -> UIViewController
-    
+    let settingsViewControllerFactory: () -> UIViewController & CompletionNotifying
+    let shim: CompletionShim
+
     func makeUIViewController(context: Context) -> UIViewController {
         // Somewhat ugly hack to strip overlying NavigationController off of plugins' Settings UIViewController
         // because that's how the "old" settings UI worked
         let settingsViewController = settingsViewControllerFactory()
         if let navigationViewController = settingsViewController as? UINavigationController,
             let result = navigationViewController.viewControllers.first {
+            if var x = result as? CompletionNotifying {
+                x.completionDelegate = shim
+            }
             return result
         } else {
             return settingsViewController
@@ -339,10 +364,15 @@ struct DeviceSettingsViewControllerAdapter: UIViewControllerRepresentable {
 }
 
 struct DeviceSettingsView: View {
-    let settingsViewControllerFactory: () -> UIViewController
+    let settingsViewControllerFactory: () -> UIViewController & CompletionNotifying
+    let shim: CompletionShim
+    init(settingsViewControllerFactory: @escaping () -> UIViewController & CompletionNotifying, completion: @escaping () -> Void) {
+        self.settingsViewControllerFactory = settingsViewControllerFactory
+        shim = CompletionShim(completion)
+    }
 
     var body: some View {
-        DeviceSettingsViewControllerAdapter(settingsViewControllerFactory: settingsViewControllerFactory)
+        DeviceSettingsViewControllerAdapter(settingsViewControllerFactory: settingsViewControllerFactory, shim: shim)
             .navigationBarTitle(settingsViewControllerFactory().title ?? "")
     }
 }

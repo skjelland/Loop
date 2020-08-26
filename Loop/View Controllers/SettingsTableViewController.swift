@@ -67,7 +67,6 @@ final class SettingsTableViewController: UITableViewController, IdentifiableClas
     }
 
     fileprivate enum LoopRow: Int, CaseCountable {
-        case temporaryNewSettings = 0
         case dosing
         case alertPermissions
     }
@@ -177,11 +176,6 @@ final class SettingsTableViewController: UITableViewController, IdentifiableClas
                     exclamationPoint.tintColor = .red
                     cell.accessoryView = exclamationPoint
                 }
-                cell.accessoryType = .disclosureIndicator
-                return cell
-            case .temporaryNewSettings:
-                let cell = tableView.dequeueReusableCell(withIdentifier: SettingsTableViewCell.className, for: indexPath)
-                cell.textLabel?.text = "New Settings (under development)"
                 cell.accessoryType = .disclosureIndicator
                 return cell
             }
@@ -584,9 +578,6 @@ final class SettingsTableViewController: UITableViewController, IdentifiableClas
                 break
             case .alertPermissions:
                 presentAlertPermissionsSettings(tableView, indexPath)
-                break
-            case .temporaryNewSettings:
-                presentTemporaryNewSettings(tableView, indexPath)
                 break
             }
         case .services:
